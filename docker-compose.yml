@@ -1,0 +1,119 @@
+version: "3.7"
+services:
+    app:
+        build:
+            args:
+                user: SkylarkSoft
+                uid: 1000
+            context: ./
+            dockerfile: Dockerfile
+        image: application
+        container_name: application
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+            - ./.docker/app/php-fpm.ini:/usr/local/etc/php/conf.d/99-app.ini
+        depends_on:
+            - master_database
+            - slave_database_one
+        links:
+            - master_database
+            - slave_database_one
+        networks:
+            - replica-network
+
+    nginx:
+        image: nginx:alpine
+        container_name: nginx
+        restart: unless-stopped
+        ports:
+            - "8001:80"
+        volumes:
+            - ./:/var/www
+            - ./.docker/nginx:/etc/nginx/conf.d/
+        networks:
+            - replica-network
+        depends_on:
+            - master_database
+            - master_phpmyadmin
+            - slave_database_one
+            - slave_phpmyadmin_one
+
+    master_database:
+        image: mysql:8.0
+        container_name: master-database
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        volumes:
+            - ./master/conf/mysql.conf.cnf:/etc/mysql/conf.d/mysql.conf.cnf
+            - ./master/data:/var/lib/mysql
+        networks:
+            - replica-network
+
+    master_phpmyadmin:
+        image: phpmyadmin
+        container_name: master-phpmyadmin
+        restart: always
+        tty: true
+        depends_on:
+            - master_database
+        ports:
+            - "9001:80"
+        environment:
+            PMA_HOST: master_database
+            PMA_PORT: 3306
+            PMA_USER: ${DB_USERNAME}
+            PMA_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            UPLOAD_LIMIT: 2048M
+        networks:
+            - replica-network
+
+    slave_database_one:
+        image: mysql:8.0
+        container_name: slave-database-one
+        restart: unless-stopped
+        depends_on:
+            - master_database
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        volumes:
+            - ./slave_one/conf/mysql.conf.cnf:/etc/mysql/conf.d/mysql.conf.cnf
+            - ./slave_one/data:/var/lib/mysql
+        networks:
+            - replica-network
+
+    slave_phpmyadmin_one:
+        image: phpmyadmin
+        container_name: slave-phpmyadmin-one
+        restart: always
+        tty: true
+        depends_on:
+            - slave_database_one
+        ports:
+            - "9002:80"
+        environment:
+            PMA_HOST: slave_database_one
+            PMA_PORT: 3306
+            PMA_USER: ${DB_USERNAME}
+            PMA_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            UPLOAD_LIMIT: 2048M
+        networks:
+            - replica-network
+
+networks:
+    replica-network:
+        driver: bridge
