@@ -1,4 +1,4 @@
-FROM php:8.1-fpm
+FROM php:8.2-fpm
 MAINTAINER Shawon
 
 # Argument for custom user
@@ -16,6 +16,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-enable imagick \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Download and Install wkhtmltopdf and libssl1.1 in a single layer
+RUN wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb && \
+    dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb && \
+    apt-get install -f -y && \
+    rm -f libssl1.1_1.1.1f-1ubuntu2_amd64.deb
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

@@ -4,6 +4,5 @@ skip-name-resolve
 default_authentication_plugin=mysql_native_password
 
 server-id=1
-log_bin=mysql-bin
-binlog-do-db=mydb
+log_bin=1
 binlog_format=ROW
