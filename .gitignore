@@ -20,3 +20,5 @@ yarn-error.log
 /.idea
 /.vscode
 /.zed
+/master/data
+/slave_one/data
