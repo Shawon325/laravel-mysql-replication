@@ -51,7 +51,3 @@ MASTER_LOG_POS='COPY_FROM_MASTER_STATUS';
     START SLAVE;
     SHOW SLAVE STATUS\G;
 ```
-### Article On It
-```
-https://shakilfci461.medium.com/master-slave-replication-using-docker-7d33aeb0c04b
-```
