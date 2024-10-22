@@ -41,7 +41,7 @@ services:
       - slave_phpmyadmin_one
 
   master_database:
-    image: mysql:8
+    image: mysql:5.7
     container_name: master-database
     restart: unless-stopped
     environment:
@@ -77,7 +77,7 @@ services:
       - replica-network
 
   slave_database_one:
-    image: mysql:8
+    image: mysql:5.7
     container_name: slave-database-one
     restart: unless-stopped
     depends_on:
